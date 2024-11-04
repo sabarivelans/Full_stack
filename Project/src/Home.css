@@ -1,0 +1,111 @@
+.bg {
+    background: linear-gradient(90deg,darkblue,darkblue);
+    height: 100%;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left:0;
+    align-items: center;
+  }
+nav{
+    position: fixed;
+    top: 0;
+    height: 70px;
+    width: 100%;
+  }
+
+.main
+{
+    align-content: center;
+    display: flex;
+    margin-top: 70px;
+    width: auto;
+    height: 80%;
+    margin-right: 02.5px;
+    margin-left: 62.5px;
+    background-color: white;
+    border-radius: 10px;
+    align-items: center;
+}
+ul{ 
+    padding: 0px;
+    align-items: center;
+    margin-left:0px;
+    gap: 20px;
+    display: flex;
+    width:auto;
+}
+li{
+    list-style: none;
+}
+.sidebar{
+    margin-top: 70px;
+    left: 0px;
+    width: 60px;
+    height: 80%;
+    position: fixed;
+    background-color: burlywood;
+    border-radius: 10px;
+    
+}
+.sidebarlist{
+    flex-direction: column;
+    display: flex;
+    gap: 15px;
+    cursor: pointer;
+    display: flex;
+}
+.webcam-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 390px;
+    margin-right: 427px;
+    margin-top: auto;
+    margin-bottom: auto;
+    flex-direction: column;
+    gap: 40px;
+    width: 300px;
+    height: auto;
+  }
+  
+.webcam-box {
+    width: 600px;
+    height: 400px;
+    border-radius: 25px; /* Adjust for curve */
+    overflow: hidden; /* Ensure the video stays inside the curved box */
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); /* Optional shadow */
+    object-fit: cover; /* Ensure the webcam stream fills the box */
+  }
+.Details{
+    
+    height: auto;
+    width: auto;
+    display: flex;
+    margin-left:40px;
+    margin-top: 200px;
+    margin-bottom: auto;
+    justify-content: left;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 20px;
+}
+#table{
+  display: flex;
+  flex-direction: row;
+  
+}
+.TimeTable{
+  gap: 2px;
+  display: flex;
+  flex-direction: column;
+  margin-right: 0px;
+  right: 0px;
+}
+
+.period {
+  display: flex;  
+  align-items: center;   
+  justify-content: center; 
+  text-align: center; 
+  color: black;
+} 

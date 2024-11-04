@@ -1,0 +1,82 @@
+.bg {
+    background: linear-gradient(90deg,darkblue,darkblue);
+    height: 100%;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left:0;
+  }
+nav{
+    position: fixed;
+    top: 0;
+    height: 70px;
+    width: 100%;
+  }
+
+.MainB
+{
+    margin-top: 70px;
+    width: auto;
+    height: 80%;
+    margin-right: 02.5px;
+    margin-left: 62.5px;
+    background-color: white;
+    border-radius: 30px;
+    flex-direction: row;
+    display: flex;
+}
+ul{ 
+    padding: 0px;
+    align-items: center;
+    margin-left:0px;
+    gap: 20px;
+    display: flex;
+    width:auto;
+}
+li{
+    list-style: none;
+}
+.sidebar{
+    margin-top: 70px;
+    left: 0px;
+    width: 60px;
+    height: 80%;
+    position: fixed;
+    background-color: burlywood;
+    border-radius: 10px;
+    
+}
+.sidebarlist{
+    flex-direction: column;
+    display: flex;
+    gap: 15px;
+    cursor: pointer;
+    display: flex;
+}
+
+.Detail{
+    flex-direction: column;
+    display: flex;
+    margin-left: 0px;
+    margin-top: 50px;
+    height: 100%;
+    align-items: left;
+    text-align: left;
+    width: 40%;
+    padding-left: 30px;
+
+}
+
+.Chartpi{
+    margin-top: auto;
+    margin-bottom: auto;
+    width: 40%;
+    height: 100%;
+
+}
+.Report{
+    position: relative;
+    width: 20%;
+    height: 100%;
+    align-content: center;
+}

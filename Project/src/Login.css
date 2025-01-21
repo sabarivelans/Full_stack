@@ -54,6 +54,9 @@ input{
     padding: 13px;
     width: 70%;
 }
+input:focus{
+    border: none;
+}
 
 a{
     margin-left: 10px;

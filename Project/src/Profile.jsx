@@ -50,7 +50,7 @@ function Profile() {
             <nav>
                 <ul style={{display:'flex'}}>
                     <li>
-                        <img src=".\src\assets\logo.png" alt="" height={50} width={50}/>
+                    <img src=".\src\assets\logo.png" alt="hi" style={{ height: '50px', width: '50px' }} />
                     </li>
                     <li title='KEC' style={{color:'white',fontSize:'20px',marginRight:'30px'}}>
                         KEC ATTENDANCE

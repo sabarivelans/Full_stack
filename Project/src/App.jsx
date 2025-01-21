@@ -1,12 +1,17 @@
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import React from 'react';
-//import Home from './Home';
-import Logi from './Register';
-
+import Home from './Home';
+import Login from './Login.jsx';
+import Register from './Register.jsx';
+import Profile from './Profile.jsx'
 function App() {
   return (
-    <div>
-      <Logi/>  {/* Directly render the Home component */}
-    </div>
+    <Routes>
+      <Route path="/" element={<Login/>}/>
+      <Route path="/home/*" element={<Home/>}/>
+      <Route path="/register/*" element={<Register/>}/>
+      <Route path="/profile/*" element={<Profile/>}/>
+    </Routes>
   );
 }
 

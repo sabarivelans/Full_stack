@@ -7,12 +7,14 @@
     left:0;
     align-items: center;
   }
-nav{
+  nav {
     position: fixed;
     top: 0;
+    left: 0;
     height: 70px;
     width: 100%;
-  }
+    z-index: 100; /* Ensure it's above other elements */
+}
 
 .main
 {
@@ -34,9 +36,6 @@ ul{
     gap: 20px;
     display: flex;
     width:auto;
-}
-li{
-    list-style: none;
 }
 .sidebar{
     margin-top: 70px;

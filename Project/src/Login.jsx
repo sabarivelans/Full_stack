@@ -9,34 +9,31 @@ function Login() {
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    try {
-      console.log("Username:", username); // Log username for debugging
+      try {
+          console.log("Username:", username); // Log username for debugging
 
-      // Reference to the "details" document inside the user's collection
-      const userDocRef = doc(db, username, 'details'); // Accessing the "details" document
-
-      // Get the document data from Firebase
-      const userDoc = await getDoc(userDocRef);
-      
-      // Check if the document exists
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        
-        // Check if password matches
-        if (userData.PASS === password) {
-          alert("Login successful!");
-          navigate('/home');  // Redirect to Home page upon successful login
-        } else {
-          alert("Invalid password");
-        }
-      } else {
-        alert("User not found");
+          const userDocRef = doc(db, 'students', username); // Accessing the user's document
+          const userDoc = await getDoc(userDocRef);
+          
+          if (userDoc.exists()) {
+              const userData = userDoc.data();
+              
+              if (userData.PASS === password) {
+                  alert("Login successful!");
+                  localStorage.setItem("username", username); // Store the username in localStorage
+                  navigate('/home');  // Redirect to Home page upon successful login
+              } else {
+                  alert("Invalid password");
+              }
+          } else {
+              alert("User not found");
+          }
+      } catch (error) {
+          console.error("Error fetching user data:", error);
+          alert("An error occurred while logging in");
       }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      alert("An error occurred while logging in");
-    }
   };
+
 
   return (
     <div>

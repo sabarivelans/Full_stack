@@ -1,111 +1,106 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, doc, setDoc, collection, getDocs } from './firebase'; // Import Firebase functions and db
+import { db, doc, setDoc } from './firebase'; // Import Firebase functions and db
+import Webcam from 'react-webcam'; // Import react-webcam
+import axios from 'axios'; // Axios for sending image data
 import './Login.css';
 
 function Register() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false); // Loading state for registration process
+  const [showCamera, setShowCamera] = useState(false); // Control for camera popup
+  const [imageData, setImageData] = useState(null); // State to store captured image data
   const navigate = useNavigate();
 
   const handleRegister = async () => {
-    setIsLoading(true); // Set loading to true when starting the registration
+    if (!imageData) {
+      alert("Please capture an image before registering.");
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      console.log("Registering Username:", username);
+      // Send the captured image to the Flask server and get the vector
+      const vector = await saveImageAndGetVector(imageData);
 
-      // Save the username and password in the specified format
-      await saveCredentialsToFirebase(username, password);
+      // Save credentials and vector to Firebase
+      await saveCredentialsToFirebase(username, password, vector);
 
-      // Copy all data from 'subjects' collection to the new user
-      await copySubjectsCollection(username);
-
-      console.log("Registration and data copy completed.");
+      console.log("Registration completed.");
       alert("Registration successful! Please log in.");
-
-      // Redirect to login page after successful registration
-      navigate('/login');
+      navigate('/'); // Redirect to login page
     } catch (error) {
       console.error("Error during registration:", error);
-      alert("An error occurred during registration");
+      alert("An error occurred during registration.");
     } finally {
-      setIsLoading(false); // Set loading to false once process is complete
+      setIsLoading(false);
     }
   };
 
-  const saveCredentialsToFirebase = async (username, password) => {
+  const saveImageAndGetVector = async (capturedImage) => {
     try {
-      // Reference to the collection named after the username and the `details` document
-      const userDocRef = doc(db, username, 'details');
-
-      // Save the credentials in the specified format
-      await setDoc(userDocRef, {
-        PASS: password, // Add the password under the field "PASS"
+      // Send the image to the Flask server
+      const response = await axios.post('http://127.0.0.1:5000/register-image', {
+        image: capturedImage.split(',')[1], // Send only the base64 data
       });
 
-      console.log("Credentials saved successfully for", username);
-    } catch (error) {
-      console.error("Error saving credentials:", error);
-      throw new Error("Failed to save credentials.");
-    }
-  };
-
-  const copySubjectsCollection = async (username) => {
-    try {
-      // Reference to the 'subjects' collection
-      const subjectsCollectionRef = collection(db, 'subjects');
-      const userSubjectsCollectionRef = collection(db, username, 'subjects'); // Correctly reference sub-collection under user
-
-      // Get all documents in the 'subjects' collection
-      const querySnapshot = await getDocs(subjectsCollectionRef);
-
-      // Copy each document's sub-collections (subjects) to the user's collection
-      const copyPromises = querySnapshot.docs.map(async (docSnapshot) => {
-        const docId = docSnapshot.id;
-        const docData = docSnapshot.data();
-
-        // Create a new document in the user's collection with the same ID and data
-        const userDocRef = doc(userSubjectsCollectionRef, docId);
-        await setDoc(userDocRef, docData);
-
-        // Now copy any sub-collections for each subject (sub-collection to sub-collection)
-        await copySubCollections(docSnapshot.ref, userDocRef);
-      });
-
-      await Promise.all(copyPromises); // Wait for all copy operations to complete
-
-      console.log("Subjects collection copied successfully for", username);
-    } catch (error) {
-      console.error("Error copying subjects collection:", error);
-      throw new Error("Failed to copy subjects collection.");
-    }
-  };
-
-  // Function to copy sub-collections from one subject document to the new user's subject document
-  const copySubCollections = async (subjectDocRef, userDocRef) => {
-    try {
-      // Get all sub-collections of the subject document
-      const subCollections = await subjectDocRef.listCollections();
-
-      for (let subCollection of subCollections) {
-        // Get all documents in the sub-collection
-        const subCollectionSnapshot = await getDocs(subCollection);
-
-        // Create the corresponding sub-collection under the user's document
-        const userSubCollectionRef = collection(db, userDocRef.path, subCollection.id);
-
-        // Copy documents to the user's sub-collection
-        const copyPromises = subCollectionSnapshot.docs.map(async (subDocSnapshot) => {
-          const subDocData = subDocSnapshot.data();
-          const userSubDocRef = doc(userSubCollectionRef, subDocSnapshot.id);
-          await setDoc(userSubDocRef, subDocData);
-        });
-
-        await Promise.all(copyPromises);
+      if (response.data && response.data.vector) {
+        console.log("Vector received from the server:", response.data.vector);
+        return response.data.vector; // Return the vector
+      } else {
+        throw new Error("Failed to retrieve vector from the server.");
       }
     } catch (error) {
-      console.error("Error copying sub-collections:", error);
+      console.error("Error saving image or retrieving vector:", error);
+      throw new Error("Failed to save image or retrieve vector.");
     }
+  };
+
+  const saveCredentialsToFirebase = async (username, password, vector) => {
+    try {
+      const userDocRef = doc(db, 'students', username);
+      await setDoc(userDocRef, {
+        PASS: password,
+        VECTOR: vector, // Store the vector in Firebase
+      });
+      console.log("Credentials and vector saved successfully for", username);
+    } catch (error) {
+      console.error("Error saving credentials and vector:", error);
+      throw new Error("Failed to save credentials and vector.");
+    }
+  };
+
+  const WebcamPopup = () => {
+    const webcamRef = React.useRef(null);
+
+    const handleCapture = () => {
+      const capturedImage = webcamRef.current.getScreenshot();
+      if (capturedImage) {
+        setImageData(capturedImage);
+        alert("Image captured successfully!");
+        setShowCamera(false); // Close the camera popup after capturing
+      } else {
+        alert("Failed to capture image. Please try again.");
+      }
+    };
+
+    return (
+      <div className="webcam-popup-overlay">
+        <div className="webcam-popup">
+          <Webcam 
+            audio={false} 
+            ref={webcamRef} 
+            screenshotFormat="image/jpeg" 
+            style={{ width: '100%', height: 'auto' }}
+          />
+          <div className="webcam-buttons">
+            <button onClick={handleCapture}>Capture Image</button>
+            <button onClick={() => setShowCamera(false)}>Cancel</button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -123,8 +118,7 @@ function Register() {
         <div className='login'>
           <h1 id='heading'>REGISTER</h1>
           <br /><br /><br />
-          
-          {/* Input fields bound to state */}
+
           <input 
             type="text" 
             placeholder='Username' 
@@ -140,14 +134,26 @@ function Register() {
           />
           <br /><br />
           <br /><br /><br /><br />
-          
-          {/* Trigger handleRegister on click */}
-          <button onClick={handleRegister} disabled={isLoading}>
-            {isLoading ? 'Registering...' : 'Register'}
+
+          <button 
+            onClick={() => setShowCamera(true)} 
+            disabled={isLoading || !username || !password}
+          >
+            {isLoading ? 'Loading...' : 'Register'}
+          </button>
+          <br /><br />
+
+          <button 
+            onClick={handleRegister} 
+            disabled={isLoading || !imageData}
+          >
+            {isLoading ? 'Registering...' : 'Submit'}
           </button>
           <br /><br />
         </div>
       </div>
+
+      {showCamera && <WebcamPopup />}
     </div>
   );
 }

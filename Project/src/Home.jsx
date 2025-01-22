@@ -20,6 +20,18 @@ function Home() {
     const [showStatus, setShowStatus] = useState(false);
     const [periods, setPeriods] = useState({});
     const [selectedPeriod, setSelectedPeriod] = useState(null);
+    const [username, setUsername] = useState('');
+    const [attendanceStatus, setAttendanceStatus] = useState({});
+
+    // Fetch username from localStorage
+    useEffect(() => {
+        const loggedInUser = localStorage.getItem("username");
+        if (loggedInUser) {
+            setUsername(loggedInUser);
+        } else {
+            console.log("No username found in localStorage");
+        }
+    }, []);
 
     const fetchAllPeriods = async () => {
         const periodsCollection = collection(db, "subjects");
@@ -30,12 +42,25 @@ function Home() {
         });
         console.log("Fetched periods data:", periodsData);
         setPeriods(periodsData);
+
+        // Fetch attendance status for each period
+        const newAttendanceStatus = {};
+        for (let periodId of ['period1', 'period2', 'period3', 'period4', 'period5', 'period6', 'period7', 'period8']) {
+            const periodDocRef = doc(db, "students", username, periodId, "attendance");
+            const periodDocSnapshot = await getDoc(periodDocRef);
+            if (periodDocSnapshot.exists()) {
+                newAttendanceStatus[periodId] = periodDocSnapshot.data().status;
+            } else {
+                newAttendanceStatus[periodId] = 'Not Verified';
+            }
+        }
+        setAttendanceStatus(newAttendanceStatus);
     };
 
     const handleSubmit = async () => {
         const imageSrc = webcamRef.current.getScreenshot();
         const imageData = imageSrc.replace("data:image/jpeg;base64,", "");
-
+    
         try {
             const response = await fetch("http://127.0.0.1:5000/save-image", {
                 method: "POST",
@@ -44,30 +69,36 @@ function Home() {
                 },
                 body: JSON.stringify({ image: imageData }),
             });
-
+    
             const result = await response.json();
-
+    
             if (result.status === "success") {
                 console.log("Script Output:", result.script_output);
                 setStatus(result.script_output);  // Display the exact output
-
+    
                 if (result.script_output === "Verified") {
-                    // Directly update Firebase for the selected period
                     const periodId = selectedPeriod ? selectedPeriod.id : null;
-
+    
                     if (periodId && ['period1', 'period2', 'period3', 'period4', 'period5', 'period6', 'period7', 'period8'].includes(periodId)) {
-                        const periodDocRef = doc(db, "subjects", periodId);
-
-                        // Update data for the selected period
-                        await setDoc(periodDocRef, {
+                        // Reference to student collection -> username document
+                        const studentRef = doc(db, "students", username); // Referring to the document of the current user
+                        
+                        // Reference to the period sub-collection under the username document
+                        const periodRef = doc(collection(studentRef, periodId), "attendance");
+    
+                        // Update period data inside the sub-collection
+                        await setDoc(periodRef, {
                             mac_address: result.mac_address,
                             bssid: result.bssid,
                             signal_strength: result.signal_strength,
                             ip_address: result.ip_address,
-                            status: "Verified"
-                        }, { merge: true });
-
-                        console.log(`Firebase updated for ${periodId}`);
+                            status: "Verified",
+                            subject: selectedPeriod?.subject,
+                            timing: selectedPeriod?.timing,
+                            facultyName: selectedPeriod?.facultyName
+                        });
+    
+                        console.log(`Firebase updated for ${username} in ${periodId} sub-collection`);
                         setStatus(`Verified attendance for ${selectedPeriod?.subject}`);
                     } else {
                         console.error("Invalid period selected.");
@@ -76,9 +107,9 @@ function Home() {
                 } else {
                     setStatus(result.script_output);
                 }
-
+    
                 if (result.script_output === "Verified") {
-                    await fetchAllPeriods(); // Refresh periods data
+                    await fetchAllPeriods(); // Refresh periods data and attendance status
                 }
             } else {
                 console.error("Error:", result.message);
@@ -88,7 +119,7 @@ function Home() {
             console.error("Error saving image:", error);
             setStatus("Error saving image.");
         }
-
+    
         // Show status popup for 5 seconds
         setShowStatus(true);
         setTimeout(() => {
@@ -114,24 +145,37 @@ function Home() {
 
     useEffect(() => {
         fetchAllPeriods();
-    }, []);
+    }, [username]);
 
     const handlePeriodClick = async (periodId) => {
         const selectedPeriodData = periods[periodId];
-
-        const status = selectedPeriodData?.status === 'Verified' ? 'Verified' : 'Not Verified';
-
-        setSelectedPeriod({
-            id: periodId,
-            subject: selectedPeriodData?.subject,
-            timing: selectedPeriodData?.timing,
-            facultyName: selectedPeriodData?.facultyName,
-            status: status,
-        });
-
+    
+        // Fetch attendance status from Firebase
+        const periodDocRef = doc(db, "students", username, periodId, "attendance");
+        const periodDocSnapshot = await getDoc(periodDocRef);
+    
+        if (periodDocSnapshot.exists()) {
+            setSelectedPeriod({
+                id: periodId,
+                subject: selectedPeriodData?.subject,
+                timing: selectedPeriodData?.timing,
+                facultyName: selectedPeriodData?.facultyName,
+                status: periodDocSnapshot.data().status, // Fetch status from Firebase
+            });
+        } else {
+            setSelectedPeriod({
+                id: periodId,
+                subject: selectedPeriodData?.subject,
+                timing: selectedPeriodData?.timing,
+                facultyName: selectedPeriodData?.facultyName,
+                status: 'Not Verified', // Default status if not found in Firebase
+            });
+        }
+    
+        // Refresh the periods data if necessary
         await fetchAllPeriods();
     };
-
+    
     return (
         <div className='bg'>
             <div id='nav'>
@@ -143,10 +187,10 @@ function Home() {
                         <li title='KEC' style={{ color: 'white', fontSize: '20px', marginRight: '30px' }}>
                             KEC ATTENDANCE
                         </li>
-                        <li title='Logout' style={{ display: 'flex', marginLeft: 'auto', marginRight: '-10px', position: 'relative', marginTop: '-15px', cursor: 'pointer' }}>
+                        <li title='Logout' style={{ display: 'flex', marginLeft: 'auto', marginRight: '-10px', position: 'relative', marginTop: '-15px', cursor: 'pointer' }} >
                             <LogoutIcon sx={{ fontSize: 40 }} />
                         </li>
-                        <li title='Profile' style={{ display: 'flex', marginRight: '10px', position: 'relative', top: '-10px', cursor: 'pointer' }}>
+                        <li title='Profile' style={{ display: 'flex', marginRight: '10px', position: 'relative', top: '-10px', cursor: 'pointer' }} >
                             <Avatar alt="Remy Sharp" src="src\assets\SABARIVELAN S.jpg" sx={{ width: 60, height: 60 }} />
                         </li>
                     </ul>
@@ -169,7 +213,10 @@ function Home() {
             </div>
             <div className='main'>
                 <div className='details'>
-                    <ul style={{ flexDirection: 'column', alignItems: 'flex-start' }} className='DetailsList'>
+                    <ul style={{ flexDirection: 'column', alignItems: 'flex-start' }} className='detailsList'>
+                        <li>
+                            Username: {username || 'Not logged in'}
+                        </li>
                         <li>
                             Subject : {selectedPeriod ? selectedPeriod.subject : ''}
                         </li>
@@ -222,7 +269,7 @@ function Home() {
                                         borderRadius: 0,
                                         borderTopLeftRadius: 20,
                                         borderBottomLeftRadius: 20,
-                                        background: periods[periodId]?.status === 'Verified'
+                                        background: attendanceStatus[periodId] === 'Verified'
                                             ? 'linear-gradient(to right, #00C851, #007E33)' // Green gradient for Verified
                                             : 'linear-gradient(to right, #4A90E2, #007AFF)', // Original gradient for non-Verified
                                         color: 'White',
@@ -232,7 +279,7 @@ function Home() {
                                 >
                                     {periods[periodId]?.subject || 'Loading...'}
                                 </Button>
-                                <Box sx={{ width: 80, height: 75, borderRadius: 0, backgroundColor: 'orange', color: 'White', fontSize: '15PX', fontFamily: 'sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Box sx={{ width: 80, height: 75, borderRadius: 0, backgroundColor: 'orange', color: 'White', fontSize: '15PX', fontFamily: 'sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center' }} >
                                     <div className='period'>{periods[periodId]?.timing || ''}</div>
                                 </Box>
                             </div>

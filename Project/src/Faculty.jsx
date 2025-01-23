@@ -10,7 +10,7 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import { Link } from 'react-router-dom';
 import './Faculty.css';
-import { db, doc, getDoc, collection, getDocs, setDoc,updateDoc } from './firebase.js';
+import { db, doc, getDoc, collection, getDocs, setDoc, updateDoc } from './firebase.js';
 
 function Faculty() {
     const [tabIndex, setTabIndex] = useState(0);
@@ -23,20 +23,20 @@ function Faculty() {
         try {
             // Reference to the user's attendance document for the selected period
             const periodDocRef = doc(db, "students", username, selectedPeriod.id, "attendance");
-    
+
             // Fetch the current attendance data for the selected period
             const periodDocSnapshot = await getDoc(periodDocRef);
-    
+
             if (periodDocSnapshot.exists()) {
                 console.log("Existing Data for User: ", periodDocSnapshot.data());
-    
+
                 // Update the `status` field to "Not Verified"
                 await updateDoc(periodDocRef, {
                     status: "Not Verified", // Set status to "Not Verified"
                 });
-    
+
                 alert(`${username}'s status has been updated to "Not Verified" for Period ${selectedPeriod.id}.`);
-    
+
                 // Optionally, update the local state or UI to reflect the removal
                 setSelectedPeriod((prev) => ({
                     ...prev,
@@ -50,12 +50,12 @@ function Faculty() {
             alert("Failed to update the user's status. Please try again.");
         }
     };
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
 
     const fetchAllPeriods = async () => {
         const periodsCollection = collection(db, "subjects");
@@ -90,32 +90,32 @@ function Faculty() {
 
     const handlePeriodClick = async (periodId) => {
         const selectedPeriodData = periods[periodId];  // Get period details
-    
+
         // Fetch all students from the 'students' collection
         const studentsCollectionRef = collection(db, "students");
         const studentsSnapshot = await getDocs(studentsCollectionRef);
-    
+
         const presentStudents = [];
         const remainingStudents = [];
         const signalStrengths = {}; // Store signal strengths for present students
-    
+
         // Iterate through each student in the 'students' collection
         for (const docSnapshot of studentsSnapshot.docs) {
             const studentData = docSnapshot.data();
-    
+
             // Get the attendance document for the specific period of this student
             const attendanceRef = doc(db, "students", docSnapshot.id, periodId, "attendance");
-    
+
             try {
                 const attendanceDoc = await getDoc(attendanceRef);
-    
+
                 // If attendance document exists, check its status
                 if (attendanceDoc.exists()) {
                     const attendanceStatus = attendanceDoc.data().status;
-    
+
                     // Get signal strength if available
                     const signalStrength = attendanceDoc.data().signal_strength || 'N/A';
-    
+
                     // Classify student as present or remaining based on attendance status
                     if (attendanceStatus === 'Verified') {
                         presentStudents.push(docSnapshot.id);  // Use docSnapshot.id (username) for the student
@@ -131,7 +131,7 @@ function Faculty() {
                 console.error(`Error fetching attendance for student: ${docSnapshot.id} in period: ${periodId}`, error);
             }
         }
-    
+
         // Set the selected period with present and remaining students
         setSelectedPeriod({
             id: periodId,
@@ -144,7 +144,7 @@ function Faculty() {
             signalStrengths // Add signal strengths to the selected period
         });
     };
-    
+
 
     return (
         <div className='bgf'>
@@ -183,165 +183,165 @@ function Faculty() {
 
             </div>
             <div className='mainf'>
-    <div className="detailsf">
-        <Box sx={{ width: '100%' }}>
-            <Tabs
-                value={tabIndex}
-                onChange={(event, newValue) => setTabIndex(newValue)}
-                centered
-                textColor="inherit"
-                indicatorColor="primary"
-                sx={{
-                    '& .MuiTabs-flexContainer': {
-                        justifyContent: 'left',
-                    },
-                }}
-            >
-                <Tab label="Present" sx={{ width: 'auto', minWidth: '80px', padding: '6px 12px' }} />
-                <Tab label="Remaining" sx={{ width: 'auto', minWidth: '80px', padding: '6px 12px' }} />
-            </Tabs>
-            <Box sx={{ padding: 2 }}>
-            {tabIndex === 0 && selectedPeriod && (
-            <div>
-                <h3>Present Students</h3>
-                {selectedPeriod.presentStudents.length > 0 ? (
-                    <>
-                        {/* Present Students Table */}
-                        <table style={{ borderCollapse: 'collapse', width: '75%' }}>
-    <thead>
-        <tr>
-            <th style={{ borderBottom: '1px solid blue', padding: '8px', textAlign: 'center' }}>S.No</th>
-            <th style={{ borderBottom: '1px solid blue', padding: '8px', textAlign: 'center' }}>Name</th>
-            <th style={{ borderBottom: '1px solid blue', padding: '1px', textAlign: 'center' }}>Signal Strength</th>
-        </tr>
-    </thead>
-    <tbody>
-        {selectedPeriod.presentStudents
-            .filter((username) =>
-                selectedPeriod.signalStrengths[username] >= (selectedPeriod.min_signal || 0)
-            )
-            .map((username, index) => (
-                <tr key={index}>
-                    <td style={{ borderBottom: '1px solid blue',padding: '8px', textAlign: 'center' }}>{index + 1}</td>
-                    <td style={{ borderBottom: '1px solid blue',padding: '8px', textAlign: 'center' }}>{username}</td>
-                    <td style={{ borderBottom: '1px solid blue',padding: '1px', textAlign: 'center' }}>
-                        {selectedPeriod.signalStrengths[username]
-                            ? `${selectedPeriod.signalStrengths[username]}%`
-                            : 'N/A'}
-                    </td>
-                </tr>
-            ))}
-    </tbody>
-</table>
-
-{/* Suspect Students Table */}
-<h3>Suspect Students</h3>
-<table style={{ borderCollapse: 'collapse', width: '75%' }}>
-    <thead>
-        <tr>
-            <th style={{ borderBottom: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>S.No</th>
-            <th style={{ borderBottom: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Name</th>
-            <th style={{ borderBottom: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Signal Strength</th>
-        </tr>
-    </thead>
-    <tbody>
-        {selectedPeriod.presentStudents
-            .filter((username) =>
-                selectedPeriod.signalStrengths[username] < (selectedPeriod.min_signal || 0)
-            )
-            .map((username, index) => (
-                <tr key={index}>
-                    <td style={{ padding: '8px', textAlign: 'center' }}>{index + 1}</td>
-                    <td style={{ padding: '8px', textAlign: 'center' }}>{username}</td>
-                    <td style={{ padding: '8px', textAlign: 'center' }}>
-                        {selectedPeriod.signalStrengths[username]
-                            ? `${selectedPeriod.signalStrengths[username]}%`
-                            : 'N/A'}
-                    </td>
-                    <td style={{ padding: '8px', textAlign: 'center' }}>
-                        <button
-                            onClick={() => handleReject(username)}
-                            style={{
-                                backgroundColor: 'red',
-                                color: 'white',
-                                border: 'none',
-                                padding: '5px 10px',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
+                <div className="detailsf">
+                    <Box sx={{ width: '100%' }}>
+                        <Tabs
+                            value={tabIndex}
+                            onChange={(event, newValue) => setTabIndex(newValue)}
+                            centered
+                            textColor="inherit"
+                            indicatorColor="primary"
+                            sx={{
+                                '& .MuiTabs-flexContainer': {
+                                    justifyContent: 'left',
+                                },
                             }}
                         >
-                            Reject
-                        </button>
-                    </td>
-                </tr>
-            ))}
-    </tbody>
-</table>
+                            <Tab label="Present" sx={{ width: 'auto', minWidth: '80px', padding: '6px 12px' }} />
+                            <Tab label="Remaining" sx={{ width: 'auto', minWidth: '80px', padding: '6px 12px' }} />
+                        </Tabs>
+                        <Box sx={{ padding: 2 }}>
+                            {tabIndex === 0 && selectedPeriod && (
+                                <div>
+                                    <h3>Present Students</h3>
+                                    {selectedPeriod.presentStudents.length > 0 ? (
+                                        <>
+                                            {/* Present Students Table */}
+                                            <table style={{ borderCollapse: 'collapse', width: '75%' }}>
+                                                <thead>
+                                                    <tr>
+                                                        <th style={{ borderBottom: '1px solid blue', padding: '8px', textAlign: 'center' }}>S.No</th>
+                                                        <th style={{ borderBottom: '1px solid blue', padding: '8px', textAlign: 'center' }}>Name</th>
+                                                        <th style={{ borderBottom: '1px solid blue', padding: '1px', textAlign: 'center' }}>Signal Strength</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {selectedPeriod.presentStudents
+                                                        .filter((username) =>
+                                                            selectedPeriod.signalStrengths[username] >= (selectedPeriod.min_signal || 0)
+                                                        )
+                                                        .map((username, index) => (
+                                                            <tr key={index}>
+                                                                <td style={{ borderBottom: '1px solid blue', padding: '8px', textAlign: 'center' }}>{index + 1}</td>
+                                                                <td style={{ borderBottom: '1px solid blue', padding: '8px', textAlign: 'center' }}>{username}</td>
+                                                                <td style={{ borderBottom: '1px solid blue', padding: '1px', textAlign: 'center' }}>
+                                                                    {selectedPeriod.signalStrengths[username]
+                                                                        ? `${selectedPeriod.signalStrengths[username]}%`
+                                                                        : 'N/A'}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                </tbody>
+                                            </table>
 
-                    </>
-                ) : (
-                    <p>No students present</p>
-                )}
-            </div>
-        )}
+                                            {/* Suspect Students Table */}
+                                            <h3>Suspect Students</h3>
+                                            <table style={{ borderCollapse: 'collapse', width: '75%' }}>
+                                                <thead>
+                                                    <tr>
+                                                        <th style={{ borderBottom: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>S.No</th>
+                                                        <th style={{ borderBottom: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Name</th>
+                                                        <th style={{ borderBottom: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Signal Strength</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {selectedPeriod.presentStudents
+                                                        .filter((username) =>
+                                                            selectedPeriod.signalStrengths[username] < (selectedPeriod.min_signal || 0)
+                                                        )
+                                                        .map((username, index) => (
+                                                            <tr key={index}>
+                                                                <td style={{ padding: '8px', textAlign: 'center' }}>{index + 1}</td>
+                                                                <td style={{ padding: '8px', textAlign: 'center' }}>{username}</td>
+                                                                <td style={{ padding: '8px', textAlign: 'center' }}>
+                                                                    {selectedPeriod.signalStrengths[username]
+                                                                        ? `${selectedPeriod.signalStrengths[username]}%`
+                                                                        : 'N/A'}
+                                                                </td>
+                                                                <td style={{ padding: '8px', textAlign: 'center' }}>
+                                                                    <button
+                                                                        onClick={() => handleReject(username)}
+                                                                        style={{
+                                                                            backgroundColor: 'red',
+                                                                            color: 'white',
+                                                                            border: 'none',
+                                                                            padding: '5px 10px',
+                                                                            borderRadius: '4px',
+                                                                            cursor: 'pointer',
+                                                                        }}
+                                                                    >
+                                                                        Reject
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                </tbody>
+                                            </table>
 
-{tabIndex === 1 && selectedPeriod && (
-    <div>
-        <h3>Remaining</h3>
-        <div>
-            {selectedPeriod.remainingStudents.length > 0 ? (
-                selectedPeriod.remainingStudents.map((username, index) => (
-                    <div key={index} className="student-boxf">{username}</div>
-                ))
-            ) : (
-                <p>No remaining students</p>
-            )}
-        </div>
-    </div>
-)}
+                                        </>
+                                    ) : (
+                                        <p>No students present</p>
+                                    )}
+                                </div>
+                            )}
 
-            </Box>
-        </Box>
-        {/* Period Details Sidebar - Keep Faculty Name and Timing Constant */}
-        {selectedPeriod && (
-            <div className="period-detailsf">
-                <h3>{selectedPeriod.subject}</h3>
-                <p>Timing: {selectedPeriod.timing}</p>
-                <p>Faculty: {selectedPeriod.facultyName}</p>
-                <p>Min: {selectedPeriod.min_signal}</p>
-            </div>
-        )}
-    </div>
-    <div>
-        <div className='TimeTablef'>
-            {['period1', 'period2', 'period3', 'period4', 'period5', 'period6', 'period7', 'period8'].map((periodId, index) => (
-                <div id='tablef' key={index}>
-                    <Button
-                        onClick={() => handlePeriodClick(periodId)}
-                        sx={{
-                            width: 110,
-                            height: 75,
-                            borderRadius: 0,
-                            borderTopLeftRadius: 20,
-                            borderBottomLeftRadius: 20,
-                            background: periods[periodId]?.status === 'Verified'
-                                ? 'linear-gradient(to right, #00C851, #007E33)' // Green gradient for Verified
-                                : 'linear-gradient(to right, #4A90E2, #007AFF)', // Original gradient for non-Verified
-                            color: 'White',
-                            fontSize: 'medium',
-                            fontFamily: 'sans-serif'
-                        }}
-                    >
-                        {periods[periodId]?.subject || 'Loading...'}
-                    </Button>
-                    <Box sx={{ width: 80, height: 75, borderRadius: 0, backgroundColor: 'orange', color: 'White', fontSize: '15PX', fontFamily: 'sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <div className='periodf'>{periods[periodId]?.timing || ''}</div>
+                            {tabIndex === 1 && selectedPeriod && (
+                                <div>
+                                    <h3>Remaining</h3>
+                                    <div>
+                                        {selectedPeriod.remainingStudents.length > 0 ? (
+                                            selectedPeriod.remainingStudents.map((username, index) => (
+                                                <div key={index} className="student-boxf">{username}</div>
+                                            ))
+                                        ) : (
+                                            <p>No remaining students</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                        </Box>
                     </Box>
+                    {/* Period Details Sidebar - Keep Faculty Name and Timing Constant */}
+                    {selectedPeriod && (
+                        <div className="period-detailsf">
+                            <h3>{selectedPeriod.subject}</h3>
+                            <p>Timing: {selectedPeriod.timing}</p>
+                            <p>Faculty: {selectedPeriod.facultyName}</p>
+                            <p>Min: {selectedPeriod.min_signal}</p>
+                        </div>
+                    )}
                 </div>
-            ))}
-        </div>
-    </div>
-</div>
+                <div>
+                    <div className='TimeTablef'>
+                        {['period1', 'period2', 'period3', 'period4', 'period5', 'period6', 'period7', 'period8'].map((periodId, index) => (
+                            <div id='tablef' key={index}>
+                                <Button
+                                    onClick={() => handlePeriodClick(periodId)}
+                                    sx={{
+                                        width: 110,
+                                        height: 75,
+                                        borderRadius: 0,
+                                        borderTopLeftRadius: 20,
+                                        borderBottomLeftRadius: 20,
+                                        background: periods[periodId]?.status === 'Verified'
+                                            ? 'linear-gradient(to right, #00C851, #007E33)' // Green gradient for Verified
+                                            : 'linear-gradient(to right, #4A90E2, #007AFF)', // Original gradient for non-Verified
+                                        color: 'White',
+                                        fontSize: 'medium',
+                                        fontFamily: 'sans-serif'
+                                    }}
+                                >
+                                    {periods[periodId]?.subject || 'Loading...'}
+                                </Button>
+                                <Box sx={{ width: 80, height: 75, borderRadius: 0, backgroundColor: 'orange', color: 'White', fontSize: '15PX', fontFamily: 'sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <div className='periodf'>{periods[periodId]?.timing || ''}</div>
+                                </Box>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
 
         </div>
     );

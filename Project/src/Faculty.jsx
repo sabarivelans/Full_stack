@@ -208,65 +208,57 @@ function Faculty() {
                     <>
                         {/* Present Students Table */}
                         <table style={{ borderCollapse: 'collapse', width: '75%' }}>
-                            <thead>
-                                <tr>
-                                    <th style={{ border: '1px solid #ddd', padding: '8px' }}>S.No</th>
-                                    <th style={{ border: '1px solid #ddd', padding: '8px' }}>Name</th>
-                                    <th style={{ border: '1px solid #ddd', padding: '8px' }}>Signal Strength</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {selectedPeriod.presentStudents
-                                    .filter((username) =>
-                                        selectedPeriod.signalStrengths[username] >= (selectedPeriod.min_signal || 0)
-                                    )
-                                    .map((username, index) => (
-                                        <tr key={index}>
-                                            <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
-                                                {index + 1}
-                                            </td>
-                                            <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
-                                                {username}
-                                            </td>
-                                            <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
-                                                {selectedPeriod.signalStrengths[username]
-                                                    ? `${selectedPeriod.signalStrengths[username]}%`
-                                                    : 'N/A'}
-                                            </td>
-                                        </tr>
-                                    ))}
-                            </tbody>
-                            </table>
+    <thead>
+        <tr>
+            <th style={{ borderBottom: '1px solid blue', padding: '8px', textAlign: 'center' }}>S.No</th>
+            <th style={{ borderBottom: '1px solid blue', padding: '8px', textAlign: 'center' }}>Name</th>
+            <th style={{ borderBottom: '1px solid blue', padding: '1px', textAlign: 'center' }}>Signal Strength</th>
+        </tr>
+    </thead>
+    <tbody>
+        {selectedPeriod.presentStudents
+            .filter((username) =>
+                selectedPeriod.signalStrengths[username] >= (selectedPeriod.min_signal || 0)
+            )
+            .map((username, index) => (
+                <tr key={index}>
+                    <td style={{ borderBottom: '1px solid blue',padding: '8px', textAlign: 'center' }}>{index + 1}</td>
+                    <td style={{ borderBottom: '1px solid blue',padding: '8px', textAlign: 'center' }}>{username}</td>
+                    <td style={{ borderBottom: '1px solid blue',padding: '1px', textAlign: 'center' }}>
+                        {selectedPeriod.signalStrengths[username]
+                            ? `${selectedPeriod.signalStrengths[username]}%`
+                            : 'N/A'}
+                    </td>
+                </tr>
+            ))}
+    </tbody>
+</table>
 
-                            {/* Suspect Students Table */}
-                            <h3>Suspect Students</h3>
-                            <table style={{ borderCollapse: 'collapse', width: '75%' }}>
-                                <thead>
-                                    <tr>
-                                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>S.No</th>
-                                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>Name</th>
-                                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>Signal Strength</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+{/* Suspect Students Table */}
+<h3>Suspect Students</h3>
+<table style={{ borderCollapse: 'collapse', width: '75%' }}>
+    <thead>
+        <tr>
+            <th style={{ borderBottom: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>S.No</th>
+            <th style={{ borderBottom: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Name</th>
+            <th style={{ borderBottom: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Signal Strength</th>
+        </tr>
+    </thead>
+    <tbody>
         {selectedPeriod.presentStudents
             .filter((username) =>
                 selectedPeriod.signalStrengths[username] < (selectedPeriod.min_signal || 0)
             )
             .map((username, index) => (
                 <tr key={index}>
-                    <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
-                        {index + 1}
-                    </td>
-                    <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
-                        {username}
-                    </td>
-                    <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
+                    <td style={{ padding: '8px', textAlign: 'center' }}>{index + 1}</td>
+                    <td style={{ padding: '8px', textAlign: 'center' }}>{username}</td>
+                    <td style={{ padding: '8px', textAlign: 'center' }}>
                         {selectedPeriod.signalStrengths[username]
                             ? `${selectedPeriod.signalStrengths[username]}%`
                             : 'N/A'}
                     </td>
-                    <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>
+                    <td style={{ padding: '8px', textAlign: 'center' }}>
                         <button
                             onClick={() => handleReject(username)}
                             style={{
@@ -284,8 +276,8 @@ function Faculty() {
                 </tr>
             ))}
     </tbody>
+</table>
 
-                        </table>
                     </>
                 ) : (
                     <p>No students present</p>

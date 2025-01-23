@@ -22,6 +22,40 @@ function Home() {
     const [selectedPeriod, setSelectedPeriod] = useState(null);
     const [username, setUsername] = useState('');
     const [attendanceStatus, setAttendanceStatus] = useState({});
+    const [vectorData, setVectorData] = useState([]);
+
+    useEffect(() => {
+        const fetchVectorData = async () => {
+            if (!username) {
+                console.log("Username not found. Unable to fetch vector data.");
+                return;
+            }
+
+            try {
+                // Reference to the student's document based on username
+                const studentDocRef = doc(db, "students", username);
+                const studentDocSnapshot = await getDoc(studentDocRef);
+
+                if (studentDocSnapshot.exists()) {
+                    const data = studentDocSnapshot.data();
+                    const vector = data.VECTOR;
+
+                    if (Array.isArray(vector) && vector.length === 128) {
+                        setVectorData(vector); // Store the vector array in state
+                        console.log("Vector data loaded:", JSON.stringify(vector));
+                    } else {
+                        console.log("VECTOR field is not in the expected structure.");
+                    }
+                } else {
+                    console.log("No document found for user:", username);
+                }
+            } catch (error) {
+                console.error("Error fetching vector data:", error);
+            }
+        };
+
+        fetchVectorData();
+    }, [username]); // Dependency on username
 
     // Fetch username from localStorage
     useEffect(() => {
@@ -58,20 +92,35 @@ function Home() {
     };
 
     const handleSubmit = async () => {
+        setStatus('Verifying...');
+        setShowStatus(true);
         const imageSrc = webcamRef.current.getScreenshot();
         const imageData = imageSrc.replace("data:image/jpeg;base64,", "");
+        const requestData = {
+            image: imageData,
+            username: username // Send the username along with the image
+        };
     
         try {
-            const response = await fetch("http://127.0.0.1:5000/save-image", {
-                method: "POST",
+            // Make the fetch request
+            const response = await fetch('http://localhost:5000/save-image', {
+                method: 'POST',
                 headers: {
-                    "Content-Type": "application/json",
+                    'Content-Type': 'application/json' // Ensure the content type is set to application/json
                 },
-                body: JSON.stringify({ image: imageData }),
+                body: JSON.stringify(requestData)
             });
     
-            const result = await response.json();
+            // Check if the response is successful
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
     
+            // Parse the response as JSON
+            const result = await response.json();
+            console.log("Response from backend:", result); // Debugging line
+    
+            // Handle the result based on the success status
             if (result.status === "success") {
                 console.log("Script Output:", result.script_output);
                 setStatus(result.script_output);  // Display the exact output
@@ -82,7 +131,7 @@ function Home() {
                     if (periodId && ['period1', 'period2', 'period3', 'period4', 'period5', 'period6', 'period7', 'period8'].includes(periodId)) {
                         // Reference to student collection -> username document
                         const studentRef = doc(db, "students", username); // Referring to the document of the current user
-                        
+    
                         // Reference to the period sub-collection under the username document
                         const periodRef = doc(collection(studentRef, periodId), "attendance");
     
@@ -95,7 +144,8 @@ function Home() {
                             status: "Verified",
                             subject: selectedPeriod?.subject,
                             timing: selectedPeriod?.timing,
-                            facultyName: selectedPeriod?.facultyName
+                            facultyName: selectedPeriod?.facultyName,
+                            timestamp: new Date().toISOString()
                         });
     
                         console.log(`Firebase updated for ${username} in ${periodId} sub-collection`);
@@ -104,20 +154,16 @@ function Home() {
                         console.error("Invalid period selected.");
                         setStatus("No valid period selected.");
                     }
-                } else {
-                    setStatus(result.script_output);
-                }
     
-                if (result.script_output === "Verified") {
-                    await fetchAllPeriods(); // Refresh periods data and attendance status
+                    // Refresh periods data and attendance status
+                    await fetchAllPeriods();
                 }
             } else {
-                console.error("Error:", result.message);
-                setStatus("Error processing image.");
+                setStatus('Not Verified'); // Display the output in case of failure
             }
         } catch (error) {
-            console.error("Error saving image:", error);
-            setStatus("Error saving image.");
+            console.error("Error:", error);
+            setStatus("Error processing image.");
         }
     
         // Show status popup for 5 seconds
@@ -126,6 +172,8 @@ function Home() {
             setShowStatus(false);
         }, 5000);
     };
+    
+    
 
     useEffect(() => {
         const updateClock = () => {
@@ -161,6 +209,7 @@ function Home() {
                 timing: selectedPeriodData?.timing,
                 facultyName: selectedPeriodData?.facultyName,
                 status: periodDocSnapshot.data().status, // Fetch status from Firebase
+                timestamp: periodDocSnapshot.data().timestamp
             });
         } else {
             setSelectedPeriod({
@@ -229,10 +278,15 @@ function Home() {
                         <li>
                             Status : {selectedPeriod ? selectedPeriod.status : ''}
                         </li>
+                        {selectedPeriod?.timestamp && (
+                            <li>
+                                Recorded At: {new Date(selectedPeriod.timestamp).toLocaleString()}
+                            </li>
+                        )}
                     </ul>
                 </div>
                 <div className="webcam-container">
-                    <div>
+                    <div className="time-box" >
                         {time}
                     </div>
 

@@ -1,7 +1,5 @@
-// src/firebase.js
-
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, getDoc, collection, getDocs,setDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, collection, getDocs, setDoc, updateDoc } from 'firebase/firestore';  // Added updateDoc here
 
 // Your Firebase config (copied from Firebase console)
 const firebaseConfig = {
@@ -13,7 +11,7 @@ const firebaseConfig = {
   appId: "1:264451466271:web:269331c227c6b5864e612a"
 };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  
-  export { db, doc, getDoc, collection, getDocs,setDoc };
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+export { db, doc, getDoc, collection, getDocs, setDoc, updateDoc }; // Ensure updateDoc is exported

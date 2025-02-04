@@ -19,6 +19,10 @@ function Faculty() {
     const [showStatus, setShowStatus] = useState(false);
     const [periods, setPeriods] = useState({});
     const [selectedPeriod, setSelectedPeriod] = useState(null);
+    const handleAccept = (username) => {
+        // Handle student acceptance logic here, e.g., updating their status
+        console.log(`${username} has been accepted`);
+    };
     const handleReject = async (username) => {
         try {
             // Reference to the user's attendance document for the selected period
@@ -287,18 +291,48 @@ function Faculty() {
 
                             {tabIndex === 1 && selectedPeriod && (
                                 <div>
-                                    <h3>Remaining</h3>
+                                    <h3>Remaining Students</h3>
                                     <div>
                                         {selectedPeriod.remainingStudents.length > 0 ? (
-                                            selectedPeriod.remainingStudents.map((username, index) => (
-                                                <div key={index} className="student-boxf">{username}</div>
-                                            ))
+                                            <table style={{ borderCollapse: 'collapse', width: '75%' }}>
+                                                <thead>
+                                                    <tr>
+                                                        <th style={{ borderBottom: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>S.No</th>
+                                                        <th style={{ borderBottom: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Name</th>
+                                                        <th style={{ borderBottom: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {selectedPeriod.remainingStudents.slice(0, 5).map((username, index) => (
+                                                        <tr key={index}>
+                                                            <td style={{ padding: '8px', textAlign: 'center' }}>{index + 1}</td>
+                                                            <td style={{ padding: '8px', textAlign: 'center' }}>{username}</td>
+                                                            <td style={{ padding: '8px', textAlign: 'center' }}>
+                                                                <button
+                                                                    onClick={() => handleAccept(username)}
+                                                                    style={{
+                                                                        backgroundColor: 'green',
+                                                                        color: 'white',
+                                                                        border: 'none',
+                                                                        padding: '5px 10px',
+                                                                        borderRadius: '4px',
+                                                                        cursor: 'pointer',
+                                                                    }}
+                                                                >
+                                                                    Accept
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
                                         ) : (
                                             <p>No remaining students</p>
                                         )}
                                     </div>
                                 </div>
                             )}
+
 
                         </Box>
                     </Box>
